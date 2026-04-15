@@ -1,0 +1,14 @@
+name: blaq_tempo_detector
+description: Pure Dart BPM detection from raw PCM audio. Spectral flux onset detection, autocorrelation, and dynamic programming beat tracking.
+version: 0.1.0
+repository: https://github.com/creativeblaq/blaq_tempo_detector
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  fftea: ^1.5.0
+
+dev_dependencies:
+  test: ^1.25.0
+  lints: ^5.1.0
