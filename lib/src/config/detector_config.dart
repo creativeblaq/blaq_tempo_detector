@@ -7,6 +7,11 @@ class DetectorConfig {
   final double strongThreshold;
   final double likelyThreshold;
 
+  /// When true, [TempoDetector.analyze] emits `developer.log` entries at each
+  /// pipeline stage (frames, onset signal stats, autocorrelation candidates,
+  /// weighted candidates, peak ratio). Off by default.
+  final bool verbose;
+
   DetectorConfig({
     this.frameSize = 1024,
     this.hopSize = 512,
@@ -15,6 +20,7 @@ class DetectorConfig {
     this.perceptualCenter = 120.0,
     this.strongThreshold = 0.7,
     this.likelyThreshold = 0.4,
+    this.verbose = false,
   }) {
     if (frameSize <= 0) {
       throw ArgumentError.value(frameSize, 'frameSize', 'Must be positive');
