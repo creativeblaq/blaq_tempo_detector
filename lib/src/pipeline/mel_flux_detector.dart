@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:blaq_tempo_detector/src/pipeline/adaptive_threshold.dart';
 import 'package:fftea/fftea.dart';
 
 class MelFluxDetector {
@@ -48,7 +49,7 @@ class MelFluxDetector {
     }
 
     final result = Float64List.fromList(fluxValues);
-    _adaptiveThreshold(result, sampleRate: sampleRate, hopSize: hopSize);
+    AdaptiveThreshold.apply(result, sampleRate: sampleRate, hopSize: hopSize);
     return result;
   }
 
@@ -106,20 +107,4 @@ class MelFluxDetector {
     return out;
   }
 
-  static void _adaptiveThreshold(
-    Float64List signal, {
-    required int sampleRate,
-    required int hopSize,
-  }) {
-    if (signal.isEmpty) return;
-    final windowSize = max(3, (0.5 * sampleRate / hopSize).round());
-    final half = windowSize ~/ 2;
-    for (var i = 0; i < signal.length; i++) {
-      final start = max(0, i - half);
-      final end = min(signal.length, i + half + 1);
-      final window = signal.sublist(start, end).toList()..sort();
-      final median = window[window.length ~/ 2];
-      signal[i] = max(0.0, signal[i] - median);
-    }
-  }
 }

@@ -1,6 +1,6 @@
-import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:blaq_tempo_detector/src/pipeline/adaptive_threshold.dart';
 import 'package:fftea/fftea.dart';
 
 class OnsetDetector {
@@ -40,32 +40,7 @@ class OnsetDetector {
     }
 
     final result = Float64List.fromList(onsetValues);
-    _adaptiveThreshold(result, sampleRate: sampleRate, hopSize: hopSize);
+    AdaptiveThreshold.apply(result, sampleRate: sampleRate, hopSize: hopSize);
     return result;
-  }
-
-  /// Subtracts a moving median from the onset signal to remove slow trends.
-  /// Window size is ~0.5 seconds of frames.
-  static void _adaptiveThreshold(
-    Float64List signal, {
-    required int sampleRate,
-    required int hopSize,
-  }) {
-    if (signal.isEmpty) return;
-
-    final windowSize = max(3, (0.5 * sampleRate / hopSize).round());
-    final half = windowSize ~/ 2;
-    final medians = Float64List(signal.length);
-
-    for (var i = 0; i < signal.length; i++) {
-      final start = max(0, i - half);
-      final end = min(signal.length, i + half + 1);
-      final window = signal.sublist(start, end).toList()..sort();
-      medians[i] = window[window.length ~/ 2];
-    }
-
-    for (var i = 0; i < signal.length; i++) {
-      signal[i] = max(0.0, signal[i] - medians[i]);
-    }
   }
 }

@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:blaq_tempo_detector/src/pipeline/adaptive_threshold.dart';
+
 class ChromaNovelty {
   const ChromaNovelty._();
 
@@ -37,28 +39,7 @@ class ChromaNovelty {
       prev = cur;
     }
 
-    _adaptiveThreshold(novelty, sampleRate: sampleRate, hopSize: hopSize);
+    AdaptiveThreshold.apply(novelty, sampleRate: sampleRate, hopSize: hopSize);
     return novelty;
-  }
-
-  /// Subtracts a moving median (~0.5s window) from the novelty curve and
-  /// clamps to non-negative. Same algorithm as OnsetDetector._adaptiveThreshold
-  /// so curves are scale-comparable for fusion.
-  static void _adaptiveThreshold(
-    Float64List signal, {
-    required int sampleRate,
-    required int hopSize,
-  }) {
-    if (signal.isEmpty) return;
-    final windowSize = max(3, (0.5 * sampleRate / hopSize).round());
-    final half = windowSize ~/ 2;
-
-    for (var i = 0; i < signal.length; i++) {
-      final start = max(0, i - half);
-      final end = min(signal.length, i + half + 1);
-      final window = signal.sublist(start, end).toList()..sort();
-      final median = window[window.length ~/ 2];
-      signal[i] = max(0.0, signal[i] - median);
-    }
   }
 }
