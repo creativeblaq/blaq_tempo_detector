@@ -3,6 +3,7 @@ import 'package:blaq_tempo_detector/src/models/tempo_result.dart';
 import 'package:test/test.dart';
 
 import '../test_signals/signal_generator.dart';
+import '../test_signals/piano_signal_generator.dart';
 
 void main() {
   group('TempoDetectorIsolate', () {
@@ -44,6 +45,22 @@ void main() {
         () => TempoDetectorIsolate.analyze(samples, sampleRate: 100),
         throwsArgumentError,
       );
+    });
+
+    test('isolate handles piano ballad via melodic fallback', () async {
+      final samples = PianoSignalGenerator.chordStabs(
+        bpm: 78.0,
+        chordsByBeat: [
+          [PianoSignalGenerator.c4, PianoSignalGenerator.e4, PianoSignalGenerator.g4],
+          [PianoSignalGenerator.a4, PianoSignalGenerator.cs4, PianoSignalGenerator.e4],
+        ],
+        durationSeconds: 15.0,
+      );
+
+      final result = await TempoDetectorIsolate.analyze(samples, sampleRate: 44100);
+      expect(result, isA<TempoDetected>());
+      final detected = result as TempoDetected;
+      expect(detected.bpm, closeTo(78.0, 5.0));
     });
   });
 }
