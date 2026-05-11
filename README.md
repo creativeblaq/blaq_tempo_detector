@@ -19,7 +19,7 @@ Uses spectral flux onset detection, autocorrelation, and dynamic programming bea
 
 ```yaml
 dependencies:
-  blaq_tempo_detector: ^0.2.0
+  blaq_tempo_detector: ^0.2.1
 ```
 
 ## Usage

@@ -1,6 +1,9 @@
 # Changelog
 
-## 0.2.0
+## 0.2.1
+
+> Released as 0.2.1 because the v0.2.0 git tag was already in use upstream
+> for a prior commit; this release ships the melodic fallback work.
 
 **BREAKING**: `TempoDetected.confidenceScore` is now a required constructor
 argument. External code that builds `TempoDetected` instances directly (for
