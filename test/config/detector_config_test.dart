@@ -59,4 +59,45 @@ void main() {
       );
     });
   });
+
+  group('DetectorConfig melodic fields', () {
+    test('defaults match spec', () {
+      final config = DetectorConfig();
+      expect(config.melodicFallback, isTrue);
+      expect(config.chromaFrameSize, 4096);
+      expect(config.chromaHopSize, 2048);
+      expect(config.melodicChromaWeight, 0.6);
+      expect(config.melodicPerceptualCenters, [72.0, 100.0, 140.0]);
+      expect(config.melodicPerceptualSigma, 0.4);
+    });
+
+    test('rejects non-positive chromaFrameSize', () {
+      expect(() => DetectorConfig(chromaFrameSize: 0), throwsArgumentError);
+      expect(() => DetectorConfig(chromaFrameSize: -1), throwsArgumentError);
+    });
+
+    test('rejects chromaHopSize > chromaFrameSize', () {
+      expect(
+        () => DetectorConfig(chromaFrameSize: 1024, chromaHopSize: 2048),
+        throwsArgumentError,
+      );
+    });
+
+    test('rejects melodicChromaWeight outside [0, 1]', () {
+      expect(() => DetectorConfig(melodicChromaWeight: -0.1), throwsArgumentError);
+      expect(() => DetectorConfig(melodicChromaWeight: 1.1), throwsArgumentError);
+    });
+
+    test('rejects empty melodicPerceptualCenters', () {
+      expect(
+        () => DetectorConfig(melodicPerceptualCenters: const []),
+        throwsArgumentError,
+      );
+    });
+
+    test('rejects non-positive melodicPerceptualSigma', () {
+      expect(() => DetectorConfig(melodicPerceptualSigma: 0.0), throwsArgumentError);
+      expect(() => DetectorConfig(melodicPerceptualSigma: -1.0), throwsArgumentError);
+    });
+  });
 }
