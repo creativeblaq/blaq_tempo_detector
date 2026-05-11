@@ -2,6 +2,11 @@
 
 ## 0.2.0
 
+**BREAKING**: `TempoDetected.confidenceScore` is now a required constructor
+argument. External code that builds `TempoDetected` instances directly (for
+mocks, fakes, or testing) must pass `confidenceScore`. Code that only consumes
+`TempoDetected` is unaffected.
+
 - Added melodic fallback pipeline (chroma + log-mel novelty fusion,
   multi-center perceptual voting). Engages automatically when the primary
   detector returns low confidence or `TempoUndetectable`. Targets melodic-

@@ -20,6 +20,13 @@ import 'package:blaq_tempo_detector/src/pipeline/perceptual_weighting.dart';
 ///
 /// The tracker maintains a sliding window capped at [maxSamples] so it can
 /// run indefinitely without unbounded memory growth.
+///
+/// Note: `TempoTracker` computes `confidenceScore` using a mean-based
+/// peakRatio normalization (threshold 10, span 90), distinct from
+/// `TempoDetector`'s median-based formula (threshold 5, span 45). The two
+/// values are NOT directly comparable across the two entry points; they
+/// are coherent within either one. Unifying the formulas is planned for
+/// a future release.
 class TempoTracker {
   final int sampleRate;
   final int maxSamples;

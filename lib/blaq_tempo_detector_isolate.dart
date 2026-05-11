@@ -10,4 +10,5 @@ export 'src/models/beat_info.dart';
 export 'src/models/confidence.dart';
 export 'src/models/tempo_candidate.dart';
 export 'src/models/tempo_result.dart';
+export 'src/models/tempo_strategy.dart';
 export 'src/models/undetectable_reason.dart';
