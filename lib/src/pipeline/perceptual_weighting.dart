@@ -90,10 +90,16 @@ class PerceptualWeighting {
     }
 
     if (rescueCandidate != null) {
-      // Swap the rescue candidate into the top slot. Keep the rest as-is.
+      // Promote the rescue candidate by bumping its score just above the former
+      // top's, so the result stays sorted descending. The exact score value is
+      // notional — callers consume .first.bpm, not .first.score.
+      final promoted = TempoCandidate(
+        bpm: rescueCandidate.bpm,
+        score: top.score,
+      );
       weighted
         ..remove(rescueCandidate)
-        ..insert(0, rescueCandidate);
+        ..insert(0, promoted);
     }
 
     return weighted;

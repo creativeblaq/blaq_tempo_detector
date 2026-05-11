@@ -64,6 +64,17 @@ void main() {
       expect(result, isEmpty);
     });
 
+    test('empty centers throws ArgumentError', () {
+      expect(
+        () => PerceptualWeighting.applyMultiCenter(
+          [const TempoCandidate(bpm: 120.0, score: 1.0)],
+          centers: [],
+          sigma: 0.4,
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
     test('output sorted by voted score descending', () {
       final candidates = [
         const TempoCandidate(bpm: 200.0, score: 0.2),
