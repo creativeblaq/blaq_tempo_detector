@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.2.0
+
+- Added melodic fallback pipeline (chroma + log-mel novelty fusion,
+  multi-center perceptual voting). Engages automatically when the primary
+  detector returns low confidence or `TempoUndetectable`. Targets melodic-
+  only material (piano+vocals, a cappella, fingerpicked guitar) that the
+  percussive pipeline can't handle.
+- Added `TempoStrategy` enum (`percussive` | `melodic`) on `TempoDetected`.
+- Added `confidenceScore` (normalized 0.0–1.0) on `TempoDetected`.
+- New `DetectorConfig` knobs: `melodicFallback` (default true),
+  `chromaFrameSize` (4096), `chromaHopSize` (2048), `melodicChromaWeight`
+  (0.6), `melodicPerceptualCenters` ([72.0, 100.0, 140.0]),
+  `melodicPerceptualSigma` (0.4).
+- Extracted shared `AdaptiveThreshold` utility — onset, chroma novelty, and
+  mel flux now route through the same two-pass median-subtraction.
+- `MelodicTempoDetector` includes peakRatio / halfPeakClutter noise gates
+  matching the percussive pipeline's reliability profile.
+- `TempoTracker` (incremental/streaming) remains percussive-only in this
+  release.
+
 ## 0.1.0
 
 - Initial release

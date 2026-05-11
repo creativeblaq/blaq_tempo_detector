@@ -11,6 +11,9 @@ Uses spectral flux onset detection, autocorrelation, and dynamic programming bea
 - **Rich output** — BPM, confidence level, beat timestamps, and a full candidate tempo histogram
 - **Isolate support** — async convenience API using `Isolate.run()` for background processing
 - **Configurable** — tune BPM range, frame size, perceptual weighting, and confidence thresholds
+- **Melodic fallback** — when percussive detection is unsure (piano+vocal
+  ballads, a cappella, fingerpicked material), automatically falls back to a
+  harmonic-novelty pipeline. Tagged on `TempoDetected.strategy`.
 
 ## Installation
 
@@ -72,6 +75,9 @@ final result = await TempoDetectorIsolate.analyze(
 3. **Autocorrelation** — finds the dominant periodicity in the onset signal
 4. **Perceptual weighting** — resolves half/double-time ambiguity (biased toward 80–160 BPM)
 5. **Beat tracking** — dynamic programming places beats aligned to onset peaks
+6. **Melodic fallback (v0.2)** — if percussive confidence is low, re-runs
+   on a fused chroma-novelty + log-mel flux curve with multi-center
+   perceptual voting (slow ballad / mid / uptempo).
 
 ## License
 
