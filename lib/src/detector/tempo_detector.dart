@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 import 'dart:typed_data';
 
 import 'package:blaq_tempo_detector/src/config/detector_config.dart';
+import 'package:blaq_tempo_detector/src/detector/melodic_tempo_detector.dart';
 import 'package:blaq_tempo_detector/src/models/confidence.dart';
 import 'package:blaq_tempo_detector/src/models/tempo_result.dart';
 import 'package:blaq_tempo_detector/src/models/undetectable_reason.dart';
@@ -41,6 +42,11 @@ class TempoDetector {
   ///
   /// [sampleRate] must be between 8000 and 192000.
   /// [startSample] and [endSample] optionally restrict the analysis window.
+  ///
+  /// When [config.melodicFallback] is true (the default), a second melodic
+  /// pipeline runs if the percussive pipeline returns [TempoUndetectable] or a
+  /// numeric confidence below [config.likelyThreshold]. The higher-confidence
+  /// result is returned; on a tie the percussive result is preferred.
   static TempoResult analyze(
     Float64List samples, {
     required int sampleRate,
@@ -49,6 +55,7 @@ class TempoDetector {
     int? endSample,
   }) {
     config ??= DetectorConfig();
+
     // Validate sample rate
     if (sampleRate < _minSampleRate || sampleRate > _maxSampleRate) {
       throw ArgumentError.value(
@@ -98,9 +105,43 @@ class TempoDetector {
       'analyze: ${segment.length} samples @ ${sampleRate}Hz '
       '(${durationSeconds.toStringAsFixed(2)}s), '
       'frameSize=${config.frameSize} hopSize=${config.hopSize} '
-      'bpmRange=${config.bpmMin}-${config.bpmMax}',
+      'bpmRange=${config.bpmMin}-${config.bpmMax} '
+      'melodicFallback=${config.melodicFallback}',
     );
 
+    final primary = _analyzePercussive(
+      segment,
+      sampleRate: sampleRate,
+      config: config,
+    );
+
+    if (!config.melodicFallback) return primary;
+
+    final shouldFallback = primary is TempoUndetectable ||
+        (primary is TempoDetected &&
+            primary.confidenceScore < config.likelyThreshold);
+
+    if (!shouldFallback) return primary;
+
+    _log(config, 'cascade: percussive low-confidence, running melodic pipeline');
+
+    final melodic = MelodicTempoDetector.analyze(
+      segment,
+      sampleRate: sampleRate,
+      config: config,
+    );
+    return _selectWinner(primary, melodic);
+  }
+
+  /// Runs the percussive DSP pipeline (stages 1–5) on [segment].
+  ///
+  /// This is the original body of [analyze] extracted verbatim. It references
+  /// [segment], [sampleRate], and [config] by name — no rewriting needed.
+  static TempoResult _analyzePercussive(
+    Float64List segment, {
+    required int sampleRate,
+    required DetectorConfig config,
+  }) {
     // Pipeline stage 1: Frame splitting
     final frames = FrameSplitter.split(
       segment,
@@ -243,6 +284,23 @@ class TempoDetector {
       beats: beats,
       candidates: topCandidates,
     );
+  }
+
+  /// Implements the 5-row tie-break table from the design doc.
+  static TempoResult _selectWinner(TempoResult primary, TempoResult melodic) {
+    if (primary is TempoDetected && melodic is TempoDetected) {
+      // Higher numeric confidence wins; tie → percussive (the older path).
+      if (melodic.confidenceScore > primary.confidenceScore) return melodic;
+      return primary;
+    }
+    if (primary is TempoDetected && melodic is TempoUndetectable) {
+      return primary;
+    }
+    if (primary is TempoUndetectable && melodic is TempoDetected) {
+      return melodic;
+    }
+    // Both undetectable: return melodic's reason (it ran later, saw more).
+    return melodic;
   }
 
   /// Returns the normalized 0–1 confidence score derived from [peakRatio].
