@@ -51,17 +51,13 @@ void main() {
       expect(undetectable.reason, UndetectableReason.silence);
     });
 
-    test('returns undetectable for noise (percussive-only mode)', () {
-      // The percussive pipeline rejects noise via peakRatio / halfPeakClutter
-      // gates. With melodicFallback disabled the cascade never fires, so noise
-      // always comes back as TempoUndetectable.
+    test('returns undetectable for noise', () {
+      // Both pipelines must reject noise. The percussive pipeline gates on
+      // peakRatio / halfPeakClutter; the melodic pipeline uses the same gates
+      // (with looser thresholds). Neither should produce a false positive.
       final samples = SignalGenerator.noise(durationSeconds: 5);
 
-      final result = TempoDetector.analyze(
-        samples,
-        sampleRate: 44100,
-        config: DetectorConfig(melodicFallback: false),
-      );
+      final result = TempoDetector.analyze(samples, sampleRate: 44100);
 
       expect(result, isA<TempoUndetectable>());
       final undetectable = result as TempoUndetectable;

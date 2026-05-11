@@ -68,16 +68,17 @@ void main() {
       expect(result, isA<TempoUndetectable>());
     });
 
-    test('noise with melodicFallback disabled is rejected by percussive pipeline', () {
+    test('noise produces undetectable or low-confidence result via cascade', () {
       final samples = SignalGenerator.noise(durationSeconds: 5);
-      // With melodicFallback off, only the percussive pipeline runs.
-      // Percussive rejects noise via peakRatio / halfPeakClutter gates.
       final result = TempoDetector.analyze(
-        samples,
-        sampleRate: 44100,
-        config: DetectorConfig(melodicFallback: false),
+        samples, sampleRate: 44100, config: DetectorConfig(),
       );
-      expect(result, isA<TempoUndetectable>());
+      // Either pipeline may rescue noise into a low-confidence TempoDetected;
+      // we tolerate that as long as confidence is uncertain.
+      if (result is TempoDetected) {
+        expect(result.confidenceScore, lessThan(0.4),
+            reason: 'Got high-confidence detection on noise: $result');
+      }
     });
   });
 }

@@ -27,6 +27,16 @@ class MelodicTempoDetector {
   /// Same minimum-duration guard as TempoDetector.
   static const _minDurationSeconds = 3.0;
 
+  /// Minimum `topScore / medianScore` ratio for the melodic pipeline to accept
+  /// its top candidate as a real tempo. Mirrors TempoDetector's gate but tuned
+  /// for the smaller dynamic range of voted scores in multi-center weighting.
+  static const _melodicPeakRatioThreshold = 3.0;
+
+  /// Maximum fraction of weighted candidates allowed above half the top score.
+  /// Same intent as TempoDetector._maxHalfPeakClutter — noise has a flat
+  /// post-weighting distribution; real tempos have a sharp peak.
+  static const _melodicMaxHalfPeakClutter = 0.20;
+
   static TempoResult analyze(
     Float64List samples, {
     required int sampleRate,
@@ -104,6 +114,23 @@ class MelodicTempoDetector {
       sigma: config.melodicPerceptualSigma,
     );
     final top = weighted.first;
+
+    // Noise gates — reject if the top candidate doesn't dominate.
+    final scores = weighted.map((c) => c.score).toList()..sort();
+    final medianScore = scores[scores.length ~/ 2];
+    final peakRatio = medianScore > 0
+        ? top.score / medianScore
+        : double.infinity;
+
+    final halfPeakThreshold = top.score * 0.5;
+    final aboveHalfPeak =
+        weighted.where((c) => c.score >= halfPeakThreshold).length;
+    final halfPeakClutter = aboveHalfPeak / weighted.length;
+
+    if (peakRatio < _melodicPeakRatioThreshold ||
+        halfPeakClutter > _melodicMaxHalfPeakClutter) {
+      return const TempoUndetectable(reason: UndetectableReason.noPattern);
+    }
 
     // Confidence score: voted score normalized against an empirical max.
     final confidenceScore = (top.score / _votedScoreMax).clamp(0.0, 1.0);
