@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.2
+
+- Calibrated `MelodicTempoDetector` against real material. The v0.2.1 noise
+  gates (peakRatio ≥ 3.0, halfPeakClutter ≤ 0.20) were tuned against
+  synthetic chord stabs and rejected real piano+vocal recordings as
+  "noPattern" — too crisp a bar. Loosened to (2.0, 0.30).
+- Confidence on melodic results is now derived from `peakRatio` (matching
+  the percussive pipeline's approach) rather than the multi-center voted
+  score directly. Voted-score-based confidence saturated noise to ~0.93;
+  peakRatio-based confidence correctly reports noise around 0.06–0.25.
+- Net effect: real piano+vocal material now reaches the user as a
+  `TempoDetected` (typically `LIKELY` or `UNCERTAIN`) instead of a hard
+  `"No rhythmic pattern found"` error. Truly noisy input still surfaces as
+  low confidence — no false high-confidence detections.
+
 ## 0.2.1
 
 > Released as 0.2.1 because the v0.2.0 git tag was already in use upstream

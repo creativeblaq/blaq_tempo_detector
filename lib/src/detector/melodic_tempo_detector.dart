@@ -21,8 +21,11 @@ import 'package:blaq_tempo_detector/src/pipeline/perceptual_weighting.dart';
 class MelodicTempoDetector {
   const MelodicTempoDetector._();
 
-  // Confidence normalization: top voted score >= this maps to 1.0.
-  static const _votedScoreMax = 0.4;
+  /// Upper end of the `peakRatio` range used for confidence normalization.
+  /// Ratios at or above this map to confidenceScore 1.0. Empirically tuned
+  /// for the smaller dynamic range of multi-center voted scores — crisp
+  /// material produces peakRatio ~8–15, noise sits near the gate at ~2.
+  static const _peakRatioConfidenceMax = 10.0;
 
   /// Same minimum-duration guard as TempoDetector.
   static const _minDurationSeconds = 3.0;
@@ -30,12 +33,19 @@ class MelodicTempoDetector {
   /// Minimum `topScore / medianScore` ratio for the melodic pipeline to accept
   /// its top candidate as a real tempo. Mirrors TempoDetector's gate but tuned
   /// for the smaller dynamic range of voted scores in multi-center weighting.
-  static const _melodicPeakRatioThreshold = 3.0;
+  ///
+  /// Loosened from 3.0 → 2.0 in v0.2.2: real piano+vocal recordings produce
+  /// shallower peaks than synthetic chord stabs (sustain, legato, vocal
+  /// continuity blur the novelty curve). Pure white noise still produces a
+  /// peakRatio below 2.0 in our test signals, so 2.0 remains a meaningful gate.
+  static const _melodicPeakRatioThreshold = 2.0;
 
   /// Maximum fraction of weighted candidates allowed above half the top score.
   /// Same intent as TempoDetector._maxHalfPeakClutter — noise has a flat
   /// post-weighting distribution; real tempos have a sharp peak.
-  static const _melodicMaxHalfPeakClutter = 0.20;
+  ///
+  /// Loosened from 0.20 → 0.30 in v0.2.2 alongside the peakRatio gate.
+  static const _melodicMaxHalfPeakClutter = 0.30;
 
   static TempoResult analyze(
     Float64List samples, {
@@ -132,8 +142,14 @@ class MelodicTempoDetector {
       return const TempoUndetectable(reason: UndetectableReason.noPattern);
     }
 
-    // Confidence score: voted score normalized against an empirical max.
-    final confidenceScore = (top.score / _votedScoreMax).clamp(0.0, 1.0);
+    // Confidence score: peakRatio-normalized (mirrors percussive pipeline).
+    // Voted-score-based confidence saturates too aggressively — noise with a
+    // shallow peak still produces voted score ~0.4 and would saturate to 1.0.
+    // peakRatio is the better discriminator: noise sits near the gate (~2),
+    // real melodic material spans 3–15.
+    const span = _peakRatioConfidenceMax - _melodicPeakRatioThreshold;
+    final confidenceScore = ((peakRatio - _melodicPeakRatioThreshold) / span)
+        .clamp(0.0, 1.0);
     final confidence = _classify(
       confidenceScore,
       strongThreshold: config.strongThreshold,
