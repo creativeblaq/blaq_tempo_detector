@@ -14,9 +14,10 @@ import 'package:blaq_tempo_detector/src/pipeline/mel_flux_detector.dart';
 import 'package:blaq_tempo_detector/src/pipeline/novelty_fusion.dart';
 import 'package:blaq_tempo_detector/src/pipeline/perceptual_weighting.dart';
 
-/// Melodic fallback tempo detection pipeline. Not exported — invoked
-/// internally by [TempoDetector] when the percussive pipeline returns low
-/// confidence or `TempoUndetectable`.
+/// Melodic fallback tempo detection pipeline. Not exported — designed to be
+/// invoked internally by [TempoDetector] when the percussive pipeline returns
+/// low confidence or `TempoUndetectable`. The cascade wiring is added by
+/// [TempoDetector.analyze] in a subsequent commit.
 class MelodicTempoDetector {
   const MelodicTempoDetector._();
 
@@ -95,14 +96,13 @@ class MelodicTempoDetector {
     }
 
     // Stage 6: multi-center voting.
+    // applyMultiCenter only returns [] for empty input; rawCandidates was
+    // already empty-checked above, so weighted is guaranteed non-empty here.
     final weighted = PerceptualWeighting.applyMultiCenter(
       rawCandidates,
       centers: config.melodicPerceptualCenters,
       sigma: config.melodicPerceptualSigma,
     );
-    if (weighted.isEmpty) {
-      return const TempoUndetectable(reason: UndetectableReason.noPattern);
-    }
     final top = weighted.first;
 
     // Confidence score: voted score normalized against an empirical max.
