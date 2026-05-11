@@ -11,3 +11,7 @@ pubspec.lock
 
 # OS
 .DS_Store
+
+# Melodic regression corpus binaries (local only)
+test/fixtures/melodic_corpus/*.wav
+test/fixtures/melodic_corpus/*.mp3
