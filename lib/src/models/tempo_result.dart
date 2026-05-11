@@ -12,10 +12,13 @@ class TempoDetected extends TempoResult {
   final double bpm;
   final Confidence confidence;
 
-  /// Normalized confidence in [0.0, 1.0]. Derived from `peakRatio` in the
-  /// percussive pipeline; from the winning candidate's voted score in the
-  /// melodic pipeline. Used internally by the cascade to compare two
-  /// `TempoDetected` results when both pipelines run.
+  /// Normalized confidence in [0.0, 1.0].
+  ///
+  /// In the percussive pipeline this is derived from `peakRatio` (top
+  /// autocorrelation score / median score). In the planned melodic pipeline
+  /// (future) it will reflect the winning candidate's voted score, normalized
+  /// to the same [0.0, 1.0] range so the cascade can compare results
+  /// numerically.
   final double confidenceScore;
 
   final List<BeatInfo> beats;

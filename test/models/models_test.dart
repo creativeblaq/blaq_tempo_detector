@@ -1,3 +1,4 @@
+import 'package:blaq_tempo_detector/src/detector/tempo_detector.dart';
 import 'package:blaq_tempo_detector/src/models/beat_info.dart';
 import 'package:blaq_tempo_detector/src/models/confidence.dart';
 import 'package:blaq_tempo_detector/src/models/tempo_candidate.dart';
@@ -5,6 +6,8 @@ import 'package:blaq_tempo_detector/src/models/tempo_result.dart';
 import 'package:blaq_tempo_detector/src/models/tempo_strategy.dart';
 import 'package:blaq_tempo_detector/src/models/undetectable_reason.dart';
 import 'package:test/test.dart';
+
+import '../test_signals/signal_generator.dart';
 
 void main() {
   group('Confidence', () {
@@ -89,14 +92,11 @@ void main() {
       expect(detected.strategy, TempoStrategy.melodic);
     });
 
-    test('confidenceScore is in [0, 1]', () {
-      const detected = TempoDetected(
-        bpm: 100.0,
-        confidence: Confidence.likely,
-        confidenceScore: 0.5,
-        beats: [],
-        candidates: [],
-      );
+    test('confidenceScore is in [0, 1] on a real click track', () {
+      final samples = SignalGenerator.clickTrack(bpm: 120, durationSeconds: 10);
+      final result = TempoDetector.analyze(samples, sampleRate: 44100);
+      expect(result, isA<TempoDetected>());
+      final detected = result as TempoDetected;
       expect(detected.confidenceScore, inInclusiveRange(0.0, 1.0));
     });
   });
