@@ -223,8 +223,9 @@ class TempoDetector {
     );
 
     // Determine confidence
+    final normalizedScore = _normalizedConfidence(peakRatio);
     final confidence = _classifyConfidence(
-      peakRatio,
+      normalizedScore,
       strongThreshold: config.strongThreshold,
       likelyThreshold: config.likelyThreshold,
     );
@@ -238,22 +239,23 @@ class TempoDetector {
     return TempoDetected(
       bpm: topCandidate.bpm,
       confidence: confidence,
+      confidenceScore: normalizedScore,
       beats: beats,
       candidates: topCandidates,
     );
   }
 
+  /// Returns the normalized 0–1 confidence score derived from [peakRatio].
+  static double _normalizedConfidence(double peakRatio) {
+    const span = _peakRatioConfidenceMax - _peakRatioThreshold;
+    return ((peakRatio - _peakRatioThreshold) / span).clamp(0.0, 1.0);
+  }
+
   static Confidence _classifyConfidence(
-    double peakRatio, {
+    double normalized, {
     required double strongThreshold,
     required double likelyThreshold,
   }) {
-    // Scale peakRatio to a 0–1 confidence score. Valid rhythmic ratios range
-    // from [_peakRatioThreshold] up to [_peakRatioConfidenceMax] — typical
-    // music spans 5–50, click tracks clip to 1.0.
-    const span = _peakRatioConfidenceMax - _peakRatioThreshold;
-    final normalized =
-        ((peakRatio - _peakRatioThreshold) / span).clamp(0.0, 1.0);
     if (normalized >= strongThreshold) return Confidence.strong;
     if (normalized >= likelyThreshold) return Confidence.likely;
     return Confidence.uncertain;

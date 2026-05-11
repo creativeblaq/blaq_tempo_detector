@@ -2,6 +2,7 @@ import 'package:blaq_tempo_detector/src/models/beat_info.dart';
 import 'package:blaq_tempo_detector/src/models/confidence.dart';
 import 'package:blaq_tempo_detector/src/models/tempo_candidate.dart';
 import 'package:blaq_tempo_detector/src/models/tempo_result.dart';
+import 'package:blaq_tempo_detector/src/models/tempo_strategy.dart';
 import 'package:blaq_tempo_detector/src/models/undetectable_reason.dart';
 import 'package:test/test.dart';
 
@@ -55,11 +56,57 @@ void main() {
     });
   });
 
+  group('TempoStrategy', () {
+    test('has exactly two variants: percussive and melodic', () {
+      expect(TempoStrategy.values, [
+        TempoStrategy.percussive,
+        TempoStrategy.melodic,
+      ]);
+    });
+  });
+
+  group('TempoDetected new fields', () {
+    test('strategy defaults to percussive', () {
+      const detected = TempoDetected(
+        bpm: 120.0,
+        confidence: Confidence.strong,
+        confidenceScore: 0.85,
+        beats: [],
+        candidates: [],
+      );
+      expect(detected.strategy, TempoStrategy.percussive);
+    });
+
+    test('strategy can be set to melodic', () {
+      const detected = TempoDetected(
+        bpm: 78.0,
+        confidence: Confidence.likely,
+        confidenceScore: 0.45,
+        beats: [],
+        candidates: [],
+        strategy: TempoStrategy.melodic,
+      );
+      expect(detected.strategy, TempoStrategy.melodic);
+    });
+
+    test('confidenceScore is in [0, 1]', () {
+      const detected = TempoDetected(
+        bpm: 100.0,
+        confidence: Confidence.likely,
+        confidenceScore: 0.5,
+        beats: [],
+        candidates: [],
+      );
+      expect(detected.confidenceScore, inInclusiveRange(0.0, 1.0));
+    });
+  });
+
   group('TempoResult', () {
     test('TempoDetected holds all fields', () {
       const result = TempoDetected(
         bpm: 120.0,
         confidence: Confidence.strong,
+        confidenceScore: 0.85,
         beats: [BeatInfo(timestampSeconds: 0.5, onsetStrength: 0.9)],
         candidates: [TempoCandidate(bpm: 120.0, score: 0.85)],
       );
@@ -78,6 +125,7 @@ void main() {
       const TempoResult result = TempoDetected(
         bpm: 120.0,
         confidence: Confidence.strong,
+        confidenceScore: 0.85,
         beats: [],
         candidates: [],
       );

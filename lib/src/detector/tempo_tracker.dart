@@ -184,6 +184,7 @@ class TempoTracker {
     return TempoDetected(
       bpm: topCandidate.bpm,
       confidence: confidence,
+      confidenceScore: normalized,
       beats: beats,
       candidates: candidates,
     );
